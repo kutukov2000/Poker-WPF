@@ -22,7 +22,7 @@
         </Style>
 
     </Window.Resources>
-    <DockPanel>
+    <DockPanel x:Name="CardsPanel">
         <Button Style="{StaticResource CardStyle}" Content="A" Tag="♠" />
         <Button Style="{StaticResource CardStyle}" Content="2" Tag="♥" />
     </DockPanel>
