@@ -22,8 +22,7 @@
         </Style>
 
     </Window.Resources>
-    <DockPanel x:Name="CardsPanel">
-        <Button Style="{StaticResource CardStyle}" Content="A" Tag="♠" />
-        <Button Style="{StaticResource CardStyle}" Content="2" Tag="♥" />
-    </DockPanel>
+    <WrapPanel x:Name="CardsPanel">
+        
+    </WrapPanel>
 </Window>
