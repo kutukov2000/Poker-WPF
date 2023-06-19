@@ -24,6 +24,8 @@
     </Window.Resources>
     <DockPanel>
         <DockPanel DockPanel.Dock="Bottom">
+            <TextBlock x:Name="playerCombination" DockPanel.Dock="Bottom">Combination:</TextBlock>
+
             <Button Click="Button_Click_1">Add Card</Button>
             <Button Click="Button_Click_2">Reload Game</Button>
         </DockPanel>
