@@ -11,18 +11,43 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Canvas Width="100" Height="150">
-                            <Rectangle Width="100" Height="150" Fill="White" Stroke="Black" StrokeThickness="2" />
-                            <TextBlock Text="{TemplateBinding Content}" FontSize="24" FontWeight="Bold" Canvas.Left="10" Canvas.Top="10"/>
-                            <TextBlock Text="{TemplateBinding Tag}" FontSize="48" Canvas.Left="34" Canvas.Top="43"/>
+                        <Canvas Width="50" Height="75">
+                            <Rectangle Width="50" Height="75" Fill="White" Stroke="Black" StrokeThickness="2" />
+                            <TextBlock Text="{TemplateBinding Content}" FontSize="12" FontWeight="Bold" Canvas.Left="5" Canvas.Top="5"/>
+                            <TextBlock Text="{TemplateBinding Tag}" FontSize="24" Canvas.Left="17" Canvas.Top="21.5"/>
                         </Canvas>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Setter Property="Margin" Value="5"/>
         </Style>
-
     </Window.Resources>
-    <WrapPanel x:Name="CardsPanel">
-        
-    </WrapPanel>
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom">
+            <Button Click="Button_Click_1">Add Card</Button>
+            <Button Click="Button_Click_2">Reload Game</Button>
+        </DockPanel>
+        <DockPanel DockPanel.Dock="Top" x:Name="CardsPanel" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <DockPanel x:Name="playerDock" DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+            </DockPanel>
+            <DockPanel x:Name="playerDock2" DockPanel.Dock="Left" VerticalAlignment="Center">
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+            </DockPanel>
+            <DockPanel x:Name="playerDock3" DockPanel.Dock="Right" VerticalAlignment="Center">
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+            </DockPanel>
+            <DockPanel x:Name="playerDock4" DockPanel.Dock="Bottom" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+            </DockPanel>
+            <DockPanel x:Name="gamesCardDock" VerticalAlignment="Center" HorizontalAlignment="Center">
+
+            </DockPanel>
+        </DockPanel>
+
+    </DockPanel>
 </Window>
