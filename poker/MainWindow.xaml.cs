@@ -17,306 +17,422 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.IO;
 using System.Globalization;
+using System.Numerics;
 
 namespace poker
 {
-    //    Піки(Spades) : ♠
-    //Хрести(Hearts) : ♥
-    //Бубни(Diamonds) : ♦
-    //Трефи(Clubs) : ♣
-    public class Card
+    public enum Combinations
     {
-        public string Suit { get; set; }//Масть
-        public string Rank { get; set; }//Значення карти
+        HightCard = 1,
+        OnePair = 2,
+        TwoPair = 3,
+        ThreeOfAKind = 4,
+        Straight = 5,
+        Flush = 6,
+        FullHouse = 7,
+        FourOfAKind = 8,
+        StraightFlush = 9,
+        RoyalFlush = 10
     }
-    public class Suits
+    public class Player
     {
-        public const string Spades = "♠";
-        public const string Hearts = "♥";
-        public const string Diamonds = "♦";
-        public const string Clubs = "♣";
-    }
-    enum ErrorCode : ushort
-    {
-        None = 0,
-        Unknown = 1,
-        ConnectionLost = 100,
-        OutlierReading = 200
-    }
-    public partial class MainWindow : Window
-    {
-        List<Card> cards;
-        HashSet<Card> selectedCards = new HashSet<Card>();
-        Random random = new Random();
-        public MainWindow()
+        public string Name { get; set; }
+        public List<Card> Hand { get; set; }
+        //public int CombinationStrength { get; set; }
+        public Combinations Combination { get; set; }
+        public Player()
         {
-            InitializeComponent();
+            Hand = new List<Card>();
+        }
+    }
+    public class PokerGame
+    {
+        private List<Card> Cards { get; set; }
 
-            //GenerateDeckOfCard();
+        public List<Player> Players { get; set; }
+        public List<Card> TableCards { get; set; }
+        public List<Card> CardsInGame { get; set; }
+
+        public PokerGame()
+        {
+            TableCards = new List<Card>();
+            CardsInGame = new List<Card>();
 
             ReadDeckOfCards();
+        }
+        private void ReadDeckOfCards()
+        {
+            string json = File.ReadAllText("cards.json");
 
-            StartGame();
+            Cards = JsonSerializer.Deserialize<List<Card>>(json);
         }
         public void StartGame()
         {
-            selectedCards.Clear();
+            Players = new List<Player>();
 
-            playerDock.Children.Clear();
-            playerDock2.Children.Clear();
-            playerDock3.Children.Clear();
-            playerDock4.Children.Clear();
-            gamesCardDock.Children.Clear();
+            CardsInGame.Clear();
+            TableCards.Clear();
+            Players.Clear();
 
-            CardsToPlayer(playerDock, 2);
-            CardsToPlayer(playerDock2, 2);
-            CardsToPlayer(playerDock3, 2);
-            CardsToPlayer(playerDock4, 2);
-            CardsToPlayer(gamesCardDock, 3);
+            Players = new List<Player> {
+                new Player() {
+            Name="Player 1"
+            } ,
+                 new Player() {
+            Name="Player 2"
+            } ,
+                  new Player() {
+            Name="Player 3"
+            } ,
+                   new Player() {
+            Name="Player 4"
+            } ,
+            };
+            CardsToPlayers();
+
+            AddCardToTable(3);
         }
-        public void CardsToPlayer(DockPanel panel, int countOfCards)
+        public void CardsToPlayers()
+        {
+            foreach (var player in Players)
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    Card card = RandomCard();
+                    player.Hand.Add(card);
+                    CardsInGame.Add(card);
+                }
+            }
+        }
+
+        private void AddCardToTable(int countOfCards)
         {
             for (int i = 0; i < countOfCards; i++)
             {
-                Card card = SelectCard();
-                AddButton(panel, card);
-                selectedCards.Add(card);
+                Card card = RandomCard();
+                TableCards.Add(card);
+                CardsInGame.Add(card);
             }
         }
-        public string CheckPokerHand(List<Card> playerCards, List<Card> tableCards)
+        public void AddCardToTable()
         {
-            List<Card> allCards = new List<Card>(playerCards);
-            allCards.AddRange(tableCards);
-
-            // Перевірка комбінацій у порядку від найсильнішої до найслабшої
-
-            if (IsRoyalFlush(allCards))
-                return "Royal Flush";
-
-            if (IsStraightFlush(allCards))
-                return "Straight Flush";
-
-            if (IsFourOfAKind(allCards))
-                return "Four of a Kind";
-
-            if (IsFullHouse(allCards))
-                return "Full House";
-
-            if (IsFlush(allCards))
-                return "Flush";
-
-            if (IsStraight(allCards))
-                return "Straight";
-
-            if (IsThreeOfAKind(allCards))
-                return "Three of a Kind";
-
-            if (IsTwoPair(allCards))
-                return "Two Pair";
-
-            if (IsOnePair(allCards))
-                return "One Pair";
-
-            return "High Card";
+            if (TableCards.Count == 0)
+            {
+                AddCardToTable(3);
+            }
+            else if (TableCards.Count < 5)
+            {
+                AddCardToTable(1);
+            }
+            //else перевірка на комбінації
         }
 
-        // Методи перевірки окремих покерних комбінацій
-
-        private bool IsRoyalFlush(List<Card> cards)
+        public bool CheckCard(Card card)
         {
-            var royalRanks = new List<string> { "10", "J", "Q", "K", "A" };
-            var suits = cards.Select(card => card.Suit).Distinct();
+            return !CardsInGame.Contains(card);
+        }
 
-            foreach (var suit in suits)
+        public Card RandomCard()
+        {
+            Random random = new Random();
+            Card card = null;
+
+            while (card == null || !CheckCard(card))
             {
-                var suitCards = cards.Where(card => card.Suit == suit);
-                var royalFlushCards = suitCards.Where(card => royalRanks.Contains(card.Rank));
-
-                if (royalFlushCards.Count() == 5)
-                    return true;
+                card = Cards[random.Next(0, Cards.Count - 1)];
             }
 
-            return false;
+            return card;
         }
 
-        private bool IsStraightFlush(List<Card> cards)
+        public void CheckPokerHand()
         {
-            var suits = cards.Select(card => card.Suit).Distinct();
+            // Методи перевірки окремих покерних комбінацій
 
-            foreach (var suit in suits)
+            bool IsRoyalFlush(List<Card> cards)
             {
-                var suitCards = cards.Where(card => card.Suit == suit);
-                var sortedCards = suitCards.OrderBy(card => card.Rank).ToList();
+                var royalRanks = new List<string> { "10", "J", "Q", "K", "A" };
+                var suits = cards.Select(card => card.Suit).Distinct();
 
-                bool isStraight = true;
-                for (int i = 0; i < sortedCards.Count - 1; i++)
+                foreach (var suit in suits)
                 {
-                    int currentRank, nextRank;
-                    if (!int.TryParse(sortedCards[i].Rank, out currentRank) ||
-                        !int.TryParse(sortedCards[i + 1].Rank, out nextRank) ||
-                        currentRank != nextRank - 1)
+                    var suitCards = cards.Where(card => card.Suit == suit);
+                    var royalFlushCards = suitCards.Where(card => royalRanks.Contains(card.Rank));
+
+                    if (royalFlushCards.Count() == 5)
+                        return true;
+                }
+
+                return false;
+            }
+
+            bool IsStraightFlush(List<Card> cards)
+            {
+                var suits = cards.Select(card => card.Suit).Distinct();
+
+                foreach (var suit in suits)
+                {
+                    var suitCards = cards.Where(card => card.Suit == suit);
+                    var sortedCards = suitCards.OrderBy(card => card.Rank).ToList();
+
+                    bool isStraight = true;
+                    for (int i = 0; i < sortedCards.Count - 1; i++)
                     {
-                        isStraight = false;
-                        break;
+                        int currentRank, nextRank;
+                        if (!int.TryParse(sortedCards[i].Rank, out currentRank) ||
+                            !int.TryParse(sortedCards[i + 1].Rank, out nextRank) ||
+                            currentRank != nextRank - 1)
+                        {
+                            isStraight = false;
+                            break;
+                        }
+                    }
+
+                    // Перевірка, чи всі карти мають одну масті та є послідовні
+                    if (isStraight && sortedCards.Count == 5)
+                        return true;
+                }
+
+                return false;
+            }
+
+            bool IsFourOfAKind(List<Card> cards)
+            {
+                var groupedCards = cards.GroupBy(card => card.Rank);
+
+                foreach (var group in groupedCards)
+                {
+                    if (group.Count() == 4)
+                        return true;
+                }
+
+                return false;
+            }
+
+            bool IsFullHouse(List<Card> cards)
+            {
+                var groupedCards = cards.GroupBy(card => card.Rank);
+
+                bool hasThreeOfAKind = false;
+                bool hasPair = false;
+
+                foreach (var group in groupedCards)
+                {
+                    if (group.Count() == 3)
+                    {
+                        hasThreeOfAKind = true;
+                    }
+                    else if (group.Count() == 2)
+                    {
+                        hasPair = true;
                     }
                 }
 
-                // Перевірка, чи всі карти мають одну масті та є послідовні
-                if (isStraight && sortedCards.Count == 5)
-                    return true;
+                return hasThreeOfAKind && hasPair;
             }
 
-            return false;
-        }
-
-        private bool IsFourOfAKind(List<Card> cards)
-        {
-            var groupedCards = cards.GroupBy(card => card.Rank);
-
-            foreach (var group in groupedCards)
+            bool IsFlush(List<Card> cards)
             {
-                if (group.Count() == 4)
-                    return true;
-            }
+                var suits = cards.Select(card => card.Suit).Distinct();
 
-            return false;
-        }
-
-        private bool IsFullHouse(List<Card> cards)
-        {
-            var groupedCards = cards.GroupBy(card => card.Rank);
-
-            bool hasThreeOfAKind = false;
-            bool hasPair = false;
-
-            foreach (var group in groupedCards)
-            {
-                if (group.Count() == 3)
+                foreach (var suit in suits)
                 {
-                    hasThreeOfAKind = true;
-                }
-                else if (group.Count() == 2)
-                {
-                    hasPair = true;
-                }
-            }
+                    var suitCards = cards.Where(card => card.Suit == suit);
 
-            return hasThreeOfAKind && hasPair;
-        }
-
-        private bool IsFlush(List<Card> cards)
-        {
-            var suits = cards.Select(card => card.Suit).Distinct();
-
-            foreach (var suit in suits)
-            {
-                var suitCards = cards.Where(card => card.Suit == suit);
-
-                if (suitCards.Count() >= 5)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private bool IsStraight(List<Card> cards)
-        {
-            var distinctRanks = cards.Select(card => card.Rank).Distinct().ToList();
-            distinctRanks.Sort();
-
-            // Перевірка на послідовність рангів
-            if (distinctRanks.Count < 5)
-                return false;
-
-            //for (int i = 0; i < distinctRanks.Count - 4; i++)
-            //{
-            //    if (int.Parse(distinctRanks[i + 4]) - int.Parse(distinctRanks[i]) == 4)
-            //        return true;
-            //}
-            for (int i = 0; i < distinctRanks.Count - 4; i++)
-            {
-                int rank1, rank2;
-                if (int.TryParse(distinctRanks[i], out rank1) && int.TryParse(distinctRanks[i + 4], out rank2))
-                {
-                    if (rank2 - rank1 == 4)
+                    if (suitCards.Count() >= 5)
                         return true;
                 }
+
+                return false;
             }
 
-            // Перевірка на випадок "A, 2, 3, 4, 5" (стріт з тузом в кінці)
-            if (distinctRanks.Contains("A") && distinctRanks.Contains("2") && distinctRanks.Contains("3") && distinctRanks.Contains("4") && distinctRanks.Contains("5"))
-                return true;
-
-            return false;
-        }
-
-        private bool IsThreeOfAKind(List<Card> cards)
-        {
-            var groupedCards = cards.GroupBy(card => card.Rank);
-
-            foreach (var group in groupedCards)
+            bool IsStraight(List<Card> cards)
             {
-                if (group.Count() == 3)
-                    return true;
-            }
+                var distinctRanks = cards.Select(card => card.Rank).Distinct().ToList();
+                distinctRanks.Sort();
 
-            return false;
-        }
+                // Перевірка на послідовність рангів
+                if (distinctRanks.Count < 5)
+                    return false;
 
-        private bool IsTwoPair(List<Card> cards)
-        {
-            var groupedCards = cards.GroupBy(card => card.Rank);
-
-            int pairCount = 0;
-
-            foreach (var group in groupedCards)
-            {
-                if (group.Count() == 2)
+                for (int i = 0; i < distinctRanks.Count - 4; i++)
                 {
-                    pairCount++;
+                    int rank1, rank2;
+                    if (int.TryParse(distinctRanks[i], out rank1) && int.TryParse(distinctRanks[i + 4], out rank2))
+                    {
+                        if (rank2 - rank1 == 4)
+                            return true;
+                    }
+                }
+
+                // Перевірка на випадок "A, 2, 3, 4, 5" (стріт з тузом в кінці)
+                if (distinctRanks.Contains("A") && distinctRanks.Contains("2") && distinctRanks.Contains("3") && distinctRanks.Contains("4") && distinctRanks.Contains("5"))
+                    return true;
+
+                return false;
+            }
+
+            bool IsThreeOfAKind(List<Card> cards)
+            {
+                var groupedCards = cards.GroupBy(card => card.Rank);
+
+                foreach (var group in groupedCards)
+                {
+                    if (group.Count() == 3)
+                        return true;
+                }
+
+                return false;
+            }
+
+            bool IsTwoPair(List<Card> cards)
+            {
+                var groupedCards = cards.GroupBy(card => card.Rank);
+
+                int pairCount = 0;
+
+                foreach (var group in groupedCards)
+                {
+                    if (group.Count() == 2)
+                    {
+                        pairCount++;
+                    }
+                }
+
+                return pairCount == 2;
+            }
+
+            bool IsOnePair(List<Card> cards)
+            {
+                var groupedCards = cards.GroupBy(card => card.Rank);
+
+                foreach (var group in groupedCards)
+                {
+                    if (group.Count() == 2)
+                        return true;
+                }
+
+                return false;
+            }
+
+
+            foreach (var player in Players)
+            {
+                List<Card> allCards = new List<Card>();
+                allCards.AddRange(player.Hand);
+                allCards.AddRange(TableCards);
+
+                // Перевірка комбінацій у порядку від найсильнішої до найслабшої
+
+                if (IsRoyalFlush(allCards))
+                    player.Combination = Combinations.RoyalFlush;
+
+                else if (IsStraightFlush(allCards))
+                    player.Combination = Combinations.StraightFlush;
+
+                else if (IsFourOfAKind(allCards))
+                    player.Combination = Combinations.FourOfAKind;
+
+                else if (IsFullHouse(allCards))
+                    player.Combination = Combinations.FullHouse;
+
+                else if (IsFlush(allCards))
+                    player.Combination = Combinations.Flush;
+
+                else if (IsStraight(allCards))
+                    player.Combination = Combinations.Straight;
+
+                else if (IsThreeOfAKind(allCards))
+                    player.Combination = Combinations.ThreeOfAKind;
+
+                else if (IsTwoPair(allCards))
+                    player.Combination = Combinations.TwoPair;
+
+                else if (IsOnePair(allCards))
+                    player.Combination = Combinations.OnePair;
+
+                else player.Combination = Combinations.HightCard;
+            }
+        }
+        public void ShowWinner()
+        {
+            int indexOfWinner = ComparePlayers();
+         
+            MessageBox.Show($"Name: {Players[indexOfWinner].Name}\n" +
+                            $"Combination:  {Players[indexOfWinner].Combination}","Winner");
+        }
+        public int ComparePlayers()
+        {
+            // Знайти гравця з найсильнішою комбінацією
+            Player winner = Players[0]; // Припустимо, що перший гравець - поточний переможець
+
+            for (int i = 1; i < Players.Count; i++)
+            {
+                // Порівняти комбінації гравців
+                if (Players[i].Combination > winner.Combination)
+                {
+                    winner = Players[i]; // Оновити переможця
+                }
+                else if (Players[i].Combination == winner.Combination)
+                {
+                    // Якщо комбінації рівні, порівняти посилення комбінацій
+                    if (GetCombinationStrength(Players[i].Combination) > GetCombinationStrength(winner.Combination))
+                    {
+                        winner = Players[i]; // Оновити переможця
+                    }
                 }
             }
 
-            return pairCount == 2;
+            // Повернути індекс переможця
+            return Players.IndexOf(winner);
         }
 
-        private bool IsOnePair(List<Card> cards)
+        public int GetCombinationStrength(Combinations combination)
         {
-            var groupedCards = cards.GroupBy(card => card.Rank);
+            // Повернути силу комбінації відповідно до перерахування Combinations
+            return (int)combination;
+        }
 
-            foreach (var group in groupedCards)
+
+        public DockPanel DrawTable()
+        {
+            DockPanel dockPanel = new DockPanel();
+
+            foreach (var player in Players)
             {
-                if (group.Count() == 2)
-                    return true;
-            }
-
-            return false;
-        }
-
-        public Card SelectCard()
-        {
-            Card card = cards[random.Next(0, cards.Count - 1)];
-            if (CheckCard(card))
-                return card;
-
-            return SelectCard();
-        }
-        public bool CheckCard(Card card)
-        {
-            if (selectedCards.Count != 0)
-            {
-                foreach (var item in selectedCards)
+                DockPanel playerPanel = new DockPanel();
+                //Add Cards Buttons
+                foreach (var card in player.Hand)
                 {
-                    if (card == item)
-                        return false;
+                    AddButton(playerPanel, card);
                 }
+
+                //Add Combination TextBox
+                playerPanel.Children.Add(new TextBlock()
+                {
+                    Foreground = Brushes.White,
+                    Text = player.Combination.ToString()
+                });
+
+                dockPanel.Children.Add(playerPanel);
             }
-            return true;
+
+            DockPanel tableCardsPanel = new DockPanel();
+            tableCardsPanel.HorizontalAlignment = HorizontalAlignment.Center;
+            tableCardsPanel.VerticalAlignment = VerticalAlignment.Center;
+            foreach (var card in TableCards)
+            {
+                AddButton(tableCardsPanel, card);
+            }
+
+            dockPanel.Children.Add(tableCardsPanel);
+
+            return dockPanel;
         }
+
         public void AddButton(DockPanel panel, Card card)
         {
             Button button = new Button();
-            button.Style = (Style)this.Resources["CardStyle"];
 
             button.Content = card.Rank;
             button.Tag = card.Suit;
@@ -328,169 +444,323 @@ namespace poker
 
             panel.Children.Add(button);
         }
-        public void ReadDeckOfCards()
+    }
+    public class Card
+    {
+        public string Suit { get; set; }
+        public string Rank { get; set; }
+    }
+    public partial class MainWindow : Window
+    {
+        PokerGame poker = new PokerGame();
+        public MainWindow()
         {
-            string json = File.ReadAllText("cards.json");
-
-            cards = JsonSerializer.Deserialize<List<Card>>(json);
+            InitializeComponent();
         }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
+        public void StartGame()
         {
-            if (gamesCardDock.Children.Count < 5)
-                CardsToPlayer(gamesCardDock, 1);
-            else
-                playerCombination.Text=CheckPokerHand(ButtonsToCards(playerDock.Children.OfType<Button>().ToList()), ButtonsToCards(gamesCardDock.Children.OfType<Button>().ToList()));
+            poker.StartGame();
+
+            DrawTable();
         }
-        public void GenerateDeckOfCard()
+        public void DrawTable()
         {
-            HashSet<Card> cards = new HashSet<Card>();
-            for (int i = 2; i < 11; i++)
+            CardsPanel.Children.Clear();
+
+            DockPanel updatedDockPanel = poker.DrawTable();
+            updatedDockPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            updatedDockPanel.VerticalAlignment = VerticalAlignment.Stretch;
+
+            int i = 1;
+            foreach (var playerPanel in updatedDockPanel.Children.OfType<DockPanel>())
             {
-                cards.Add(new Card
+                playerPanel.Style = (Style)this.Resources["DockStyle" + i++.ToString()];
+
+                foreach (var button in playerPanel.Children.OfType<Button>())
                 {
-                    Suit = "♠",
-                    Rank = i.ToString(),
-                });
+                    button.Style = (Style)this.Resources["CardStyle"];
+                }
             }
-            cards.Add(new Card
-            {
-                Suit = "♠",
-                Rank = "J",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♠",
-                Rank = "Q",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♠",
-                Rank = "K",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♠",
-                Rank = "A",
-            });
+            CardsPanel.Children.Add(updatedDockPanel);
+        }
+        #region oldLogic
+        //public void CardsToPlayer(DockPanel panel, int countOfCards)
+        //{
+        //    for (int i = 0; i < countOfCards; i++)
+        //    {
+        //        Card card = RandomCard();
+        //        AddButton(panel, card);
+        //        selectedCards.Add(card);
+        //    }
+        //}
+        //public string CheckPokerHand(List<Card> playerCards, List<Card> tableCards)
+        //{
+        //    List<Card> allCards = new List<Card>(playerCards);
+        //    allCards.AddRange(tableCards);
 
-            for (int i = 2; i < 11; i++)
-            {
-                cards.Add(new Card
-                {
-                    Suit = "♥",
-                    Rank = i.ToString(),
-                });
-            }
-            cards.Add(new Card
-            {
-                Suit = "♥",
-                Rank = "J",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♥",
-                Rank = "Q",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♥",
-                Rank = "K",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♥",
-                Rank = "A",
-            });
+        //    // Перевірка комбінацій у порядку від найсильнішої до найслабшої
 
-            for (int i = 2; i < 11; i++)
-            {
-                cards.Add(new Card
-                {
-                    Suit = "♦",
-                    Rank = i.ToString(),
-                });
-            }
-            cards.Add(new Card
-            {
-                Suit = "♦",
-                Rank = "J",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♦",
-                Rank = "Q",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♦",
-                Rank = "K",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♦",
-                Rank = "A",
-            });
+        //    if (IsRoyalFlush(allCards))
+        //        return "Royal Flush";
 
-            for (int i = 2; i < 11; i++)
-            {
-                cards.Add(new Card
-                {
-                    Suit = "♣",
-                    Rank = i.ToString(),
-                });
-            }
-            cards.Add(new Card
-            {
-                Suit = "♣",
-                Rank = "J",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♣",
-                Rank = "Q",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♣",
-                Rank = "K",
-            });
-            cards.Add(new Card
-            {
-                Suit = "♣",
-                Rank = "A",
-            });
+        //    if (IsStraightFlush(allCards))
+        //        return "Straight Flush";
 
-            foreach (var card in cards)
-            {
-                Button button = new Button();
-                button.Style = (Style)this.Resources["CardStyle"];
-                button.Content = card.Rank;
-                button.Tag = card.Suit;
-                CardsPanel.Children.Add(button);
-            }
+        //    if (IsFourOfAKind(allCards))
+        //        return "Four of a Kind";
 
-            string jsonString = JsonSerializer.Serialize(cards);
+        //    if (IsFullHouse(allCards))
+        //        return "Full House";
 
-            File.WriteAllText("cards.json", jsonString);
+        //    if (IsFlush(allCards))
+        //        return "Flush";
+
+        //    if (IsStraight(allCards))
+        //        return "Straight";
+
+        //    if (IsThreeOfAKind(allCards))
+        //        return "Three of a Kind";
+
+        //    if (IsTwoPair(allCards))
+        //        return "Two Pair";
+
+        //    if (IsOnePair(allCards))
+        //        return "One Pair";
+
+        //    return "High Card";
+        //}
+
+        //// Методи перевірки окремих покерних комбінацій
+
+        //private bool IsRoyalFlush(List<Card> cards)
+        //{
+        //    var royalRanks = new List<string> { "10", "J", "Q", "K", "A" };
+        //    var suits = cards.Select(card => card.Suit).Distinct();
+
+        //    foreach (var suit in suits)
+        //    {
+        //        var suitCards = cards.Where(card => card.Suit == suit);
+        //        var royalFlushCards = suitCards.Where(card => royalRanks.Contains(card.Rank));
+
+        //        if (royalFlushCards.Count() == 5)
+        //            return true;
+        //    }
+
+        //    return false;
+        //}
+
+        //private bool IsStraightFlush(List<Card> cards)
+        //{
+        //    var suits = cards.Select(card => card.Suit).Distinct();
+
+        //    foreach (var suit in suits)
+        //    {
+        //        var suitCards = cards.Where(card => card.Suit == suit);
+        //        var sortedCards = suitCards.OrderBy(card => card.Rank).ToList();
+
+        //        bool isStraight = true;
+        //        for (int i = 0; i < sortedCards.Count - 1; i++)
+        //        {
+        //            int currentRank, nextRank;
+        //            if (!int.TryParse(sortedCards[i].Rank, out currentRank) ||
+        //                !int.TryParse(sortedCards[i + 1].Rank, out nextRank) ||
+        //                currentRank != nextRank - 1)
+        //            {
+        //                isStraight = false;
+        //                break;
+        //            }
+        //        }
+
+        //        // Перевірка, чи всі карти мають одну масті та є послідовні
+        //        if (isStraight && sortedCards.Count == 5)
+        //            return true;
+        //    }
+
+        //    return false;
+        //}
+
+        //private bool IsFourOfAKind(List<Card> cards)
+        //{
+        //    var groupedCards = cards.GroupBy(card => card.Rank);
+
+        //    foreach (var group in groupedCards)
+        //    {
+        //        if (group.Count() == 4)
+        //            return true;
+        //    }
+
+        //    return false;
+        //}
+
+        //private bool IsFullHouse(List<Card> cards)
+        //{
+        //    var groupedCards = cards.GroupBy(card => card.Rank);
+
+        //    bool hasThreeOfAKind = false;
+        //    bool hasPair = false;
+
+        //    foreach (var group in groupedCards)
+        //    {
+        //        if (group.Count() == 3)
+        //        {
+        //            hasThreeOfAKind = true;
+        //        }
+        //        else if (group.Count() == 2)
+        //        {
+        //            hasPair = true;
+        //        }
+        //    }
+
+        //    return hasThreeOfAKind && hasPair;
+        //}
+
+        //private bool IsFlush(List<Card> cards)
+        //{
+        //    var suits = cards.Select(card => card.Suit).Distinct();
+
+        //    foreach (var suit in suits)
+        //    {
+        //        var suitCards = cards.Where(card => card.Suit == suit);
+
+        //        if (suitCards.Count() >= 5)
+        //            return true;
+        //    }
+
+        //    return false;
+        //}
+
+        //private bool IsStraight(List<Card> cards)
+        //{
+        //    var distinctRanks = cards.Select(card => card.Rank).Distinct().ToList();
+        //    distinctRanks.Sort();
+
+        //    // Перевірка на послідовність рангів
+        //    if (distinctRanks.Count < 5)
+        //        return false;
+
+        //    //for (int i = 0; i < distinctRanks.Count - 4; i++)
+        //    //{
+        //    //    if (int.Parse(distinctRanks[i + 4]) - int.Parse(distinctRanks[i]) == 4)
+        //    //        return true;
+        //    //}
+        //    for (int i = 0; i < distinctRanks.Count - 4; i++)
+        //    {
+        //        int rank1, rank2;
+        //        if (int.TryParse(distinctRanks[i], out rank1) && int.TryParse(distinctRanks[i + 4], out rank2))
+        //        {
+        //            if (rank2 - rank1 == 4)
+        //                return true;
+        //        }
+        //    }
+
+        //    // Перевірка на випадок "A, 2, 3, 4, 5" (стріт з тузом в кінці)
+        //    if (distinctRanks.Contains("A") && distinctRanks.Contains("2") && distinctRanks.Contains("3") && distinctRanks.Contains("4") && distinctRanks.Contains("5"))
+        //        return true;
+
+        //    return false;
+        //}
+
+        //private bool IsThreeOfAKind(List<Card> cards)
+        //{
+        //    var groupedCards = cards.GroupBy(card => card.Rank);
+
+        //    foreach (var group in groupedCards)
+        //    {
+        //        if (group.Count() == 3)
+        //            return true;
+        //    }
+
+        //    return false;
+        //}
+
+        //private bool IsTwoPair(List<Card> cards)
+        //{
+        //    var groupedCards = cards.GroupBy(card => card.Rank);
+
+        //    int pairCount = 0;
+
+        //    foreach (var group in groupedCards)
+        //    {
+        //        if (group.Count() == 2)
+        //        {
+        //            pairCount++;
+        //        }
+        //    }
+
+        //    return pairCount == 2;
+        //}
+
+        //private bool IsOnePair(List<Card> cards)
+        //{
+        //    var groupedCards = cards.GroupBy(card => card.Rank);
+
+        //    foreach (var group in groupedCards)
+        //    {
+        //        if (group.Count() == 2)
+        //            return true;
+        //    }
+
+        //    return false;
+        //}
+
+        //public Card RandomCard()
+        //{
+        //    Card card = cards[random.Next(0, cards.Count - 1)];
+        //    if (CheckCard(card))
+        //        return card;
+
+        //    return RandomCard();
+        //}
+        //public bool CheckCard(Card card)
+        //{
+        //    if (selectedCards.Count != 0)
+        //    {
+        //        foreach (var item in selectedCards)
+        //        {
+        //            if (card == item)
+        //                return false;
+        //        }
+        //    }
+        //    return true;
+        //}
+        //public void AddButton(DockPanel panel, Card card)
+        //{
+        //    Button button = new Button();
+        //    button.Style = (Style)this.Resources["CardStyle"];
+
+        //    button.Content = card.Rank;
+        //    button.Tag = card.Suit;
+
+        //    if (card.Suit == "♥" || card.Suit == "♦")
+        //        button.Foreground = Brushes.Red;
+        //    else
+        //        button.Foreground = Brushes.Black;
+
+        //    panel.Children.Add(button);
+        //}
+        //public void ReadDeckOfCards()
+        //{
+        //    string json = File.ReadAllText("cards.json");
+
+        //    cards = JsonSerializer.Deserialize<List<Card>>(json);
+        //}
+        #endregion
+        private void AddTableCard_Click(object sender, RoutedEventArgs e)
+        {
+            poker.AddCardToTable();
+            DrawTable();
         }
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
             StartGame();
         }
-        private List<Card> ButtonsToCards(List<Button> buttons)
+
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            List<Card> cards = new List<Card>();
-            foreach (Button button in buttons)
-            {
-                cards.Add(new Card
-                {
-                    Rank = button.Content.ToString(),
-                    Suit = button.Tag.ToString()
-                });
-            }
-            return cards;
+            poker.CheckPokerHand();
+            DrawTable();
+            poker.ShowWinner();
         }
     }
 }

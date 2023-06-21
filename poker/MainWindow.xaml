@@ -21,35 +21,59 @@
             </Setter>
             <Setter Property="Margin" Value="5"/>
         </Style>
+
+
+        <Style TargetType="DockPanel" x:Key="DockStyle1">
+            <Setter Property="DockPanel.Dock" Value="Top"></Setter>
+            <Setter Property="HorizontalAlignment" Value="Center"></Setter>
+
+        </Style>
+        <Style TargetType="DockPanel" x:Key="DockStyle2">
+            <Setter Property="DockPanel.Dock" Value="Right"></Setter>
+        </Style>
+        <Style TargetType="DockPanel" x:Key="DockStyle3">
+            <Setter Property="DockPanel.Dock" Value="Left"></Setter>
+        </Style>
+        <Style TargetType="DockPanel" x:Key="DockStyle4">
+            <Setter Property="DockPanel.Dock" Value="Bottom"></Setter>
+            <Setter Property="HorizontalAlignment" Value="Center"></Setter>
+
+        </Style>
     </Window.Resources>
     <DockPanel>
-        <DockPanel DockPanel.Dock="Bottom">
-            <TextBlock x:Name="playerCombination" DockPanel.Dock="Bottom">Combination:</TextBlock>
-
-            <Button Click="Button_Click_1">Add Card</Button>
+        <DockPanel DockPanel.Dock="Bottom" LastChildFill="False" HorizontalAlignment="Center">
+            <Button Click="AddTableCard_Click">Add Card</Button>
             <Button Click="Button_Click_2">Reload Game</Button>
+            <Button Click="Button_Click">Show Result</Button>
         </DockPanel>
-        <DockPanel DockPanel.Dock="Top" x:Name="CardsPanel" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-            <DockPanel x:Name="playerDock" DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Top">
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-            </DockPanel>
-            <DockPanel x:Name="playerDock2" DockPanel.Dock="Left" VerticalAlignment="Center">
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-            </DockPanel>
-            <DockPanel x:Name="playerDock3" DockPanel.Dock="Right" VerticalAlignment="Center">
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-            </DockPanel>
-            <DockPanel x:Name="playerDock4" DockPanel.Dock="Bottom" HorizontalAlignment="Center" VerticalAlignment="Bottom">
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-                <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
-            </DockPanel>
-            <DockPanel x:Name="gamesCardDock" VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Border Margin="10" BorderBrush="LightGreen" Background="Green" BorderThickness="15" CornerRadius="50" DockPanel.Dock="Top">
+            <DockPanel x:Name="CardsPanel" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <DockPanel x:Name="playerDock" DockPanel.Dock="Top" HorizontalAlignment="Center">
+                    <TextBlock DockPanel.Dock="Top"></TextBlock>
+                    
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                </DockPanel>
+                <DockPanel x:Name="playerDock2" DockPanel.Dock="Left" >
+                    <TextBlock DockPanel.Dock="Top"></TextBlock>
+                    
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                </DockPanel>
+                <DockPanel x:Name="playerDock3" DockPanel.Dock="Right" >
+                    <TextBlock DockPanel.Dock="Top"></TextBlock>
+                    
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                </DockPanel>
+                <DockPanel x:Name="playerDock4" DockPanel.Dock="Bottom" HorizontalAlignment="Center">
+                    <TextBlock DockPanel.Dock="Top"></TextBlock>
 
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                    <Button Style="{StaticResource CardStyle}" Content="A" Tag="♦"></Button>
+                </DockPanel>
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontWeight="Bold" FontSize="48">POKER</TextBlock>
             </DockPanel>
-        </DockPanel>
-
+        </Border>
     </DockPanel>
 </Window>
